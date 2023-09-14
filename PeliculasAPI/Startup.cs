@@ -41,7 +41,18 @@ namespace PeliculasAPI
         {
             services.AddAutoMapper(typeof(Startup));
 
-            services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosAzure>();
+            services.AddTransient<IAlmacenadorArchivos>(sp =>
+            {
+                var env = sp.GetRequiredService<IWebHostEnvironment>();
+                
+                if (env.IsDevelopment())
+                {
+                    var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+                    return new AlmacenadorArchivosLocal(env, httpContextAccessor);
+                }
+                else 
+                    return new AlmacenadorArchivosAzure(Configuration);
+            });
             services.AddHttpContextAccessor();
 
             services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
